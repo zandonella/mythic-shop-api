@@ -1,13 +1,15 @@
-import fs from 'fs'
+import fs from 'fs';
 import path from 'path';
 
 let masterJson = {};
 
-const champJsons = fs.readdirSync('./champs').filter(file => path.extname(file) === '.json');
+const champJsons = fs
+    .readdirSync('./champs')
+    .filter((file) => path.extname(file) === '.json');
 
-// saves tile image to ./tiles with the naming convention {champNumber}{skinNumber}.jpg 
+// saves tile image to ./tiles with the naming convention {skinNumber}.jpg
 function saveTileImage(imagePath, skinNumber) {
-    let skinStr = skinNumber.toString()
+    let skinStr = skinNumber.toString();
     const destPath = path.join('./tiles', `${skinStr}.jpg`);
     console.log(`Saving tile image to ${destPath}`);
     fs.copyFileSync(imagePath, destPath);
@@ -15,9 +17,9 @@ function saveTileImage(imagePath, skinNumber) {
 }
 
 function getNewImagePath(imagePath) {
-    const parts = imagePath.split("Characters/");
+    const parts = imagePath.split('Characters/');
     const result = parts[1].toLowerCase();
-    const newPath = path.join("assets", result);
+    const newPath = path.join('assets', result);
     return newPath;
 }
 
@@ -30,16 +32,16 @@ function cleanChampData(json) {
         const tileImagePath = saveTileImage(tilePath, skin.id);
         skins[skin.id] = {
             skinName: skin.name,
-            tilePath: tileImagePath
+            tilePath: tileImagePath,
         };
     });
     return {
         champName: champName,
-        skins: skins
+        skins: skins,
     };
 }
 
-champJsons.forEach(file => {
+champJsons.forEach((file) => {
     const fileData = fs.readFileSync(path.join('./champs', file));
     const json = JSON.parse(fileData);
     const cleanedData = cleanChampData(json);
@@ -49,5 +51,5 @@ champJsons.forEach(file => {
 fs.writeFileSync(
     'masterChamps.json',
     JSON.stringify(masterJson, null, 2),
-    'utf8'
+    'utf8',
 );
