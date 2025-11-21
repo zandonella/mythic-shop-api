@@ -3,9 +3,10 @@ catalog.json
 parsedCatalog.json
 mythicShop.json
 masterChamps.json
+data/*
 champs
-tiles
-assets
+tiles/*
+assets/*
 
 
 # Logs
