@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const jsonData = fs.readFileSync('catalog.json', 'utf8');
+const jsonData = fs.readFileSync('data/catalog.json', 'utf8');
 const catalog = JSON.parse(jsonData);
 
 function getChampNumber(tags) {
@@ -18,6 +18,7 @@ function parseCatalog(items) {
     // filter items as needed
     items = items.filter((item) => item.sale != null);
     items = items.filter((item) => item.inventoryType == 'CHAMPION_SKIN');
+    items = items.filter((item) => item.subInventoryType != 'RECOLOR');
 
     // map data to only include relevant fields
     items = items.map((item) => ({
@@ -25,6 +26,7 @@ function parseCatalog(items) {
         originalPrice: item.prices?.[0]?.cost,
         salePrice: item.sale?.prices?.[0]?.cost,
         champNumber: getChampNumber(item.tags),
+        contentID: item.itemInstanceId,
     }));
     return items;
 }
