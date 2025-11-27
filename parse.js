@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const jsonData = fs.readFileSync('data/catalog.json', 'utf8');
+const jsonData = fs.readFileSync('assets/sourceData/catalog.json', 'utf8');
 const catalog = JSON.parse(jsonData);
 
 function getChampNumber(tags) {
