@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const jsonData = fs.readFileSync('assets/sourceData/catalog.json', 'utf8');
+const jsonData = fs.readFileSync('data/source/catalog.json', 'utf8');
 const catalog = JSON.parse(jsonData);
 
 function getChampNumber(tags) {
@@ -27,6 +27,7 @@ function parseCatalog(items) {
         salePrice: item.sale?.prices?.[0]?.cost,
         champNumber: getChampNumber(item.tags),
         contentID: item.itemInstanceId,
+        itemID: item.itemId,
     }));
     return items;
 }
@@ -34,7 +35,7 @@ function parseCatalog(items) {
 const parsedCatalog = parseCatalog(catalog);
 
 fs.writeFileSync(
-    'parsedCatalog.json',
-    JSON.stringify(parsedCatalog, null, 2),
+    'data/parsed/sales.json',
+    JSON.stringify(parsedCatalog, null, 4),
     'utf8',
 );
