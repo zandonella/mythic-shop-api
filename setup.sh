@@ -11,4 +11,3 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 # Icons
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icons.json > data/source/icons.json
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icon-sets.json > data/source/iconSets.json
-# ./snip-snip.exe https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/assets/characters/ --filter splash_tile -o assets/characters

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { createCDNImageUrl } from './lib/images.js';
+import { createCDNImageUrl } from '../lib/images.js';
 
 // skins
 const skinJsonData = fs.readFileSync('data/source/skins.json', 'utf8');

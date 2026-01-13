@@ -8,5 +8,8 @@
     },
     "type": "module",
     "author": "",
-    "license": "ISC"
+    "license": "ISC",
+    "dependencies": {
+        "@hasagi/core": "^0.6.9"
+    }
 }
