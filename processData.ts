@@ -1,4 +1,7 @@
-import { createCDNImageUrl } from './lib/images.js';
+import {
+    createCDNImageUrl,
+    getChampionNameFromImagePath,
+} from './lib/images.js';
 import { supabase } from './lib/supabase.ts';
 import type {
     CatalogItemRecord,
@@ -32,6 +35,8 @@ function processSkins(): CatalogItemRecord[] {
             return [];
         }
 
+        const champion = getChampionNameFromImagePath(skin.tilePath);
+
         const skinlineId = skin.skinLines ? skin.skinLines[0]?.id : null;
         const skinlineName = skinlineId
             ? getSkinlineNameById(skinlineId)
@@ -41,6 +46,7 @@ function processSkins(): CatalogItemRecord[] {
             ItemType: 'Skin',
             RiotItemID: String(skin.id),
             Name: skin.name,
+            Champion: champion,
             Skinline: skinlineName,
             ImageURL: createCDNImageUrl(skin.tilePath),
         };
@@ -50,6 +56,7 @@ function processSkins(): CatalogItemRecord[] {
                 ItemType: 'Chroma',
                 RiotItemID: String(chroma.id),
                 Name: chroma.name,
+                Champion: champion,
                 Skinline: skinlineName,
                 ImageURL: createCDNImageUrl(chroma.tilePath),
             })) ?? [];
@@ -61,7 +68,6 @@ function processSkins(): CatalogItemRecord[] {
 }
 
 async function upsertCatalogItems(items: CatalogItemRecord[]) {
-    items.slice(0, 10);
     const { error } = await supabase
         .from('CatalogItem')
         .upsert(items, { onConflict: 'ItemType,RiotItemID' });

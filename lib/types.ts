@@ -20,6 +20,7 @@ export type RawSkinsById = Record<string, RawSkin>;
 export type CatalogItemRecord = {
     ItemType: string;
     RiotItemID: string;
+    Champion: string | null;
     Name: string;
     Skinline: string | null;
     ImageURL: string;
