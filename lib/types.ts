@@ -8,6 +8,17 @@ export type RawSkin = {
     chromas?: RawChroma[] | null;
 };
 
+export type RawChampion = {
+    id: number;
+    name: string;
+    alias: string;
+};
+
+export type RawSkinline = {
+    id: number;
+    name: string;
+};
+
 export type RawChroma = {
     id: number;
     name: string;
@@ -18,15 +29,14 @@ export type RawSkinsById = Record<string, RawSkin>;
 
 // database types
 export type CatalogItemRecord = {
-    ItemType: string;
+    ItemType: number;
     RiotItemID: string;
-    Champion: string | null;
+    ChampionID: number | null;
     Name: string;
-    Skinline: string | null;
+    SkinlineID: number | null;
     ImageURL: string;
 };
 
-// look these up by RiotItemID?
 export type SkinSaleRecord = {
     ItemID: string;
     SaleStartAt: string;
@@ -46,4 +56,15 @@ export type MythicSaleRecord = {
     PercentOff: number;
     isActive: boolean;
     Section: 'Daily' | 'Weekly' | 'Biweekly' | 'Featured';
+};
+
+export type ChampionRecord = {
+    id: number;
+    Slug: string;
+    Name: string;
+};
+
+export type SkinlineRecord = {
+    id: number;
+    Name: string;
 };

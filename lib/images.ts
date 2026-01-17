@@ -1,7 +1,7 @@
 const COMMUNITY_DRAGON_BASE_URL =
     'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default';
 
-function getCommunityDragonUrl(imagePath) {
+function getCommunityDragonUrl(imagePath: string): string | null {
     if (!imagePath) return null;
 
     const prefix = '/lol-game-data/assets/';
@@ -13,16 +13,16 @@ function getCommunityDragonUrl(imagePath) {
     return `${COMMUNITY_DRAGON_BASE_URL}/${lowered}`;
 }
 
-export function getChampionNameFromImagePath(imagePath) {
+export function getChampionNameFromImagePath(imagePath: string): string | null {
     const match = imagePath.match(/\/Characters\/([^/]+)\//);
     return match ? match[1] : null;
 }
 
-export function createCDNImageUrl(imagePath) {
+export function createCDNImageUrl(imagePath: string): string | null {
     const cdnBaseUrl = '//wsrv.nl/?url=';
-    imagePath = getCommunityDragonUrl(imagePath);
+    const cdnImagePath = getCommunityDragonUrl(imagePath);
 
-    return `${cdnBaseUrl}${imagePath}`;
+    return cdnImagePath ? `${cdnBaseUrl}${cdnImagePath}` : null;
 }
 
 // const testEmote =

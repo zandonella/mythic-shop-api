@@ -1,7 +1,7 @@
 import {
     createCDNImageUrl,
     getChampionNameFromImagePath,
-} from './lib/images.js';
+} from './lib/images.ts';
 import { supabase } from './lib/supabase.ts';
 import type {
     CatalogItemRecord,
@@ -9,22 +9,58 @@ import type {
     MythicSaleRecord,
     RawSkinsById,
     RawSkin,
+    RawChampion,
+    RawSkinline,
+    ChampionRecord,
+    SkinlineRecord,
 } from './lib/types.ts';
 import fs from 'fs';
 
 const skinlineJsonData = fs.readFileSync('data/source/skinlines.json', 'utf8');
-const skinlines = JSON.parse(skinlineJsonData);
-const skinlineDictionary = skinlines.reduce((acc: any, line: any) => {
-    acc[line.id] = line;
-    return acc;
-}, {});
+const skinlines: RawSkinline[] = JSON.parse(skinlineJsonData);
 
-function getSkinlineNameById(id: number): string | null {
-    const skinline = skinlineDictionary[id];
-    return skinline ? skinline.name : null;
+const championJsonData = fs.readFileSync(
+    'data/source/champion-summary.json',
+    'utf8',
+);
+const champions: RawChampion[] = JSON.parse(championJsonData);
+
+// helpers
+function normalizeChampionKey(key: string): string {
+    return key.trim().toLowerCase();
 }
 
-function processSkins(): CatalogItemRecord[] {
+function ChampionDictionary(): Map<string, number> {
+    const championDictionary = new Map<string, number>();
+    for (const champ of champions) {
+        if (champ.id < 0) continue;
+        championDictionary.set(normalizeChampionKey(champ.alias), champ.id);
+    }
+
+    return championDictionary;
+}
+
+// processing functions
+function processChampions(): ChampionRecord[] {
+    const reducedChamps = champions
+        .filter((champ) => champ.id < 66600 && champ.id > 0)
+        .map((champ) => ({
+            id: champ.id,
+            Slug: normalizeChampionKey(champ.alias),
+            Name: champ.name,
+        }));
+    return reducedChamps;
+}
+
+function processSkinlines(): SkinlineRecord[] {
+    const reducedSkinlines = skinlines.map((skinline) => ({
+        id: skinline.id,
+        Name: skinline.name,
+    }));
+    return reducedSkinlines;
+}
+
+function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
     const jsonData = fs.readFileSync('data/source/skins.json', 'utf8');
 
     const skinJson: RawSkinsById = JSON.parse(jsonData);
@@ -36,30 +72,64 @@ function processSkins(): CatalogItemRecord[] {
         }
 
         const champion = getChampionNameFromImagePath(skin.tilePath);
+        if (!champion) {
+            console.warn(
+                `Could not determine champion for skin: ${skin.name} (ID: ${skin.id})`,
+            );
+            return [];
+        }
+
+        const championID = ChampionDict.get(normalizeChampionKey(champion));
+        if (!championID) {
+            console.warn(
+                `Could not determine champion ID for skin: ${skin.name} (ID: ${skin.id})`,
+            );
+            return [];
+        }
+
+        const baseImageUrl = createCDNImageUrl(skin.tilePath);
+        if (!baseImageUrl) {
+            console.warn(
+                `Could not create image URL for skin: ${skin.name} (ID: ${skin.id})`,
+            );
+            return [];
+        }
 
         const skinlineId = skin.skinLines ? skin.skinLines[0]?.id : null;
-        const skinlineName = skinlineId
-            ? getSkinlineNameById(skinlineId)
-            : null;
 
         const baseSkin: CatalogItemRecord = {
-            ItemType: 'Skin',
+            ItemType: 1,
             RiotItemID: String(skin.id),
             Name: skin.name,
-            Champion: champion,
-            Skinline: skinlineName,
-            ImageURL: createCDNImageUrl(skin.tilePath),
+            ChampionID: championID,
+            SkinlineID: skinlineId,
+            ImageURL: baseImageUrl,
         };
 
-        const chromas: CatalogItemRecord[] =
-            skin.chromas?.map((chroma) => ({
-                ItemType: 'Chroma',
-                RiotItemID: String(chroma.id),
-                Name: chroma.name,
-                Champion: champion,
-                Skinline: skinlineName,
-                ImageURL: createCDNImageUrl(chroma.tilePath),
-            })) ?? [];
+        const chromas: CatalogItemRecord[] = [];
+
+        if (skin.chromas && skin.chromas.length > 0) {
+            for (const chroma of skin.chromas) {
+                const chromaURL = createCDNImageUrl(chroma.tilePath);
+                if (!chromaURL) {
+                    console.warn(
+                        `Could not create image URL for chroma: ${chroma.id} of skin: ${skin.name} (ID: ${skin.id})`,
+                    );
+                    continue;
+                }
+
+                const chromaSkin: CatalogItemRecord = {
+                    ItemType: 2,
+                    RiotItemID: String(chroma.id),
+                    Name: chroma.name,
+                    ChampionID: championID,
+                    SkinlineID: skinlineId,
+                    ImageURL: chromaURL,
+                };
+
+                chromas.push(chromaSkin);
+            }
+        }
 
         return [baseSkin, ...chromas];
     });
@@ -79,8 +149,38 @@ async function upsertCatalogItems(items: CatalogItemRecord[]) {
     }
 }
 
+async function upsertChampionData(champions: ChampionRecord[]) {
+    const { error } = await supabase
+        .from('Champion')
+        .upsert(champions, { onConflict: 'id' });
+    if (error) {
+        console.error('Error inserting champion data:', error);
+    } else {
+        console.log(`Inserted/Updated champion data successfully.`);
+    }
+}
+
+async function upsertSkinlineData(skinlines: SkinlineRecord[]) {
+    const { error } = await supabase
+        .from('Skinline')
+        .upsert(skinlines, { onConflict: 'id' });
+    if (error) {
+        console.error('Error inserting skinline data:', error);
+    } else {
+        console.log(`Inserted/Updated skinline data successfully.`);
+    }
+}
+
 async function main() {
-    const processedSkins = processSkins();
+    const ChampionDict = ChampionDictionary();
+
+    const processedChampions = processChampions();
+    await upsertChampionData(processedChampions);
+
+    const processedSkinlines = processSkinlines();
+    await upsertSkinlineData(processedSkinlines);
+
+    const processedSkins = processSkins(ChampionDict);
     await upsertCatalogItems(processedSkins);
 }
 main();
