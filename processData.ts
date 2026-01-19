@@ -55,10 +55,12 @@ function processChampions(): ChampionRecord[] {
 }
 
 function processSkinlines(): SkinlineRecord[] {
-    const reducedSkinlines = skinlines.map((skinline) => ({
-        id: skinline.id,
-        Name: skinline.name,
-    }));
+    const reducedSkinlines = skinlines
+        .filter((skinline) => skinline.id > 0)
+        .map((skinline) => ({
+            id: skinline.id,
+            Name: skinline.name,
+        }));
     return reducedSkinlines;
 }
 
