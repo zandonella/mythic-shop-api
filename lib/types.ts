@@ -12,6 +12,7 @@ export type RawChampion = {
     id: number;
     name: string;
     alias: string;
+    squarePortraitPath: string;
 };
 
 export type RawSkinline = {
@@ -62,6 +63,7 @@ export type ChampionRecord = {
     id: number;
     Slug: string;
     Name: string;
+    ImageURL: string;
 };
 
 export type SkinlineRecord = {

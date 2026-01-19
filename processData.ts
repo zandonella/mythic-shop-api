@@ -46,8 +46,9 @@ function processChampions(): ChampionRecord[] {
         .filter((champ) => champ.id < 66600 && champ.id > 0)
         .map((champ) => ({
             id: champ.id,
-            Slug: normalizeChampionKey(champ.alias),
+            Slug: champ.alias,
             Name: champ.name,
+            ImageURL: createCDNImageUrl(champ.squarePortraitPath),
         }));
     return reducedChamps;
 }
