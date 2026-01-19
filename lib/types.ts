@@ -26,12 +26,18 @@ export type RawChroma = {
     tilePath: string;
 };
 
+export type RawFinisher = {
+    itemId: number;
+    translatedName: string;
+    iconPath: string;
+};
+
 export type RawSkinsById = Record<string, RawSkin>;
 
 // database types
 export type CatalogItemRecord = {
     ItemType: number;
-    RiotItemID: string;
+    RiotItemID: number;
     ChampionID: number | null;
     Name: string;
     SkinlineID: number | null;

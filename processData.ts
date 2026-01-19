@@ -13,6 +13,7 @@ import type {
     RawSkinline,
     ChampionRecord,
     SkinlineRecord,
+    RawFinisher,
 } from './lib/types.ts';
 import fs from 'fs';
 
@@ -61,6 +62,20 @@ function processSkinlines(): SkinlineRecord[] {
     return reducedSkinlines;
 }
 
+function processFinishers(): CatalogItemRecord[] {
+    const jsonData = fs.readFileSync('data/source/finishers.json', 'utf8');
+    const finisherJson: RawFinisher[] = JSON.parse(jsonData);
+    const finishers: CatalogItemRecord[] = finisherJson.map((finisher) => ({
+        ItemType: 5,
+        RiotItemID: finisher.itemId,
+        Name: finisher.translatedName,
+        ChampionID: null,
+        SkinlineID: null,
+        ImageURL: createCDNImageUrl(finisher.iconPath),
+    }));
+    return finishers;
+}
+
 function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
     const jsonData = fs.readFileSync('data/source/skins.json', 'utf8');
 
@@ -100,7 +115,7 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
 
         const baseSkin: CatalogItemRecord = {
             ItemType: 1,
-            RiotItemID: String(skin.id),
+            RiotItemID: skin.id,
             Name: skin.name,
             ChampionID: championID,
             SkinlineID: skinlineId,
@@ -121,7 +136,7 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
 
                 const chromaSkin: CatalogItemRecord = {
                     ItemType: 2,
-                    RiotItemID: String(chroma.id),
+                    RiotItemID: chroma.id,
                     Name: chroma.name,
                     ChampionID: championID,
                     SkinlineID: skinlineId,
@@ -183,5 +198,8 @@ async function main() {
 
     const processedSkins = processSkins(ChampionDict);
     await upsertCatalogItems(processedSkins);
+
+    const processedFinishers = processFinishers();
+    await upsertCatalogItems(processedFinishers);
 }
 main();
