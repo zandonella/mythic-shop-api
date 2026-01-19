@@ -18,11 +18,11 @@ export function getChampionNameFromImagePath(imagePath: string): string | null {
     return match ? match[1] : null;
 }
 
-export function createCDNImageUrl(imagePath: string): string | null {
+export function createCDNImageUrl(imagePath: string): string {
     const cdnBaseUrl = '//wsrv.nl/?url=';
     const cdnImagePath = getCommunityDragonUrl(imagePath);
 
-    return cdnImagePath ? `${cdnBaseUrl}${cdnImagePath}` : null;
+    return `${cdnBaseUrl}${cdnImagePath}`;
 }
 
 // const testEmote =
