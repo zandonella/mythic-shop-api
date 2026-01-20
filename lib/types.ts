@@ -34,6 +34,30 @@ export type RawFinisher = {
 
 export type RawSkinsById = Record<string, RawSkin>;
 
+export type RawCatalogSale = {
+    active: boolean;
+    inventoryType: string;
+    itemId: number;
+    prices: [
+        {
+            cost: number;
+            currency: string;
+        },
+    ];
+    sale: {
+        endDate: Date;
+        prices: [
+            {
+                cost: number;
+                currency: string;
+                discount: number;
+            },
+        ];
+        startDate: Date;
+    } | null;
+    subInventoryType: string;
+};
+
 // database types
 export type CatalogItemRecord = {
     ItemType: number;
@@ -44,24 +68,25 @@ export type CatalogItemRecord = {
     ImageURL: string;
 };
 
-export type SkinSaleRecord = {
-    ItemID: string;
-    SaleStartAt: string;
-    SaleEndAt: string;
+export type CatalogSaleRecord = {
+    RiotItemID: number;
+    SaleStartAt: Date;
+    SaleEndAt: Date;
+    ItemType: number;
     NormalPrice: number;
     SalePrice: number;
     PercentOff: number;
-    isActive: boolean;
+    IsActive: boolean;
 };
 
 export type MythicSaleRecord = {
-    ItemID: string;
+    RiotItemID: string;
     SaleStartAt: string;
     SaleEndAt: string;
     NormalPrice: number;
     SalePrice: number;
     PercentOff: number;
-    isActive: boolean;
+    IsActive: boolean;
     Section: 'Daily' | 'Weekly' | 'Biweekly' | 'Featured';
 };
 

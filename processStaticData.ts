@@ -5,8 +5,6 @@ import {
 import { supabase } from './lib/supabase.ts';
 import type {
     CatalogItemRecord,
-    SkinSaleRecord,
-    MythicSaleRecord,
     RawSkinsById,
     RawSkin,
     RawChampion,
@@ -154,6 +152,8 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
 
     return reducedSkins;
 }
+
+// upsert functions
 
 async function upsertCatalogItems(items: CatalogItemRecord[]) {
     const { error } = await supabase
