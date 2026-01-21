@@ -1,6 +1,7 @@
 // imported data types
 export type RawSkin = {
     id: number;
+    contentId: string;
     isBase: boolean;
     name: string;
     tilePath: string;
@@ -24,12 +25,14 @@ export type RawChroma = {
     id: number;
     name: string;
     tilePath: string;
+    contentId: string;
 };
 
 export type RawFinisher = {
     itemId: number;
     translatedName: string;
     iconPath: string;
+    contentId: string;
 };
 
 export type RawSkinsById = Record<string, RawSkin>;
@@ -58,6 +61,41 @@ export type RawCatalogSale = {
     subInventoryType: string;
 };
 
+export type RawMythicSale = {
+    startTime: string;
+    endTime: string;
+    catalogEntries: Array<{
+        displayMetadata: {
+            type?: string;
+            shoppefront?: {
+                bundleType?: string;
+            };
+        };
+        name: string;
+        id: string;
+        endTime: string;
+        purchaseUnits: Array<{
+            fulfillment: {
+                itemId: string;
+                name: string;
+            };
+            paymentOptions?: Array<{
+                payments: Array<{
+                    finalDelta: number;
+                    name: string;
+                }>;
+            }>;
+        }>;
+    }>;
+    displayMetadata: {
+        shoppefront: {
+            categories: {
+                array: string[];
+            };
+        };
+    };
+};
+
 // database types
 export type CatalogItemRecord = {
     ItemType: number;
@@ -66,6 +104,7 @@ export type CatalogItemRecord = {
     Name: string;
     SkinlineID: number | null;
     ImageURL: string;
+    ShopID: string;
 };
 
 export type CatalogSaleRecord = {
@@ -80,15 +119,22 @@ export type CatalogSaleRecord = {
     IsActive: boolean;
 };
 
+export type sectionType = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'FEATURED';
+
 export type MythicSaleRecord = {
-    RiotItemID: string;
-    SaleStartAt: string;
-    SaleEndAt: string;
-    NormalPrice: number;
-    SalePrice: number;
-    PercentOff: number;
+    OfferID: string;
+    SaleStartAt: Date;
+
+    PrimaryItemID: string;
+    SaleEndAt: Date;
+    Price: number;
+    Currency: string;
     IsActive: boolean;
-    Section: 'Daily' | 'Weekly' | 'Biweekly' | 'Featured';
+    Section: sectionType;
+
+    IsBundle: boolean;
+    IncludedItems: string[];
+    BundleType: string | null;
 };
 
 export type ChampionRecord = {
