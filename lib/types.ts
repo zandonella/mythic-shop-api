@@ -89,9 +89,7 @@ export type RawMythicSale = {
     }>;
     displayMetadata: {
         shoppefront: {
-            categories: {
-                array: string[];
-            };
+            categories: string[];
         };
     };
 };

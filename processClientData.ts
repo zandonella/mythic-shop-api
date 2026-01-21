@@ -53,7 +53,7 @@ function minimizeMythicSale(sales: RawMythicSale[]): MythicSaleRecord[] {
 
     const minimizedSales = sales.flatMap((sale) => {
         const section =
-            sale.displayMetadata?.shoppefront?.categories?.array?.[0] ??
+            sale.displayMetadata?.shoppefront?.categories[0] ??
             ('FEATURED' as sectionType);
 
         const saleStartAt = new Date(sale.startTime);
