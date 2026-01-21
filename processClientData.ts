@@ -156,9 +156,9 @@ async function deactivateOldSales(table: 'CatalogSale' | 'MythicSale') {
 
 // main function
 function main() {
-    // const sales = processCatalogSales();
-    // upsertCatalogSales(sales);
-    // deactivateOldSales('CatalogSale');
+    const sales = processCatalogSales();
+    upsertCatalogSales(sales);
+    deactivateOldSales('CatalogSale');
 
     const mythicSales = processMythicSales();
     upsertMythicSales(mythicSales);
