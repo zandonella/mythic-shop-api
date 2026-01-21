@@ -12,6 +12,8 @@ import type {
     ChampionRecord,
     SkinlineRecord,
     RawFinisher,
+    RawIcon,
+    RawEmote,
 } from './lib/types.ts';
 import fs from 'fs';
 
@@ -75,6 +77,38 @@ function processFinishers(): CatalogItemRecord[] {
         ShopID: finisher.contentId,
     }));
     return finishers;
+}
+
+function processIcons(): CatalogItemRecord[] {
+    const jsonData = fs.readFileSync('data/source/icons.json', 'utf8');
+    const iconJson: RawIcon[] = JSON.parse(jsonData);
+
+    const icons: CatalogItemRecord[] = iconJson.map((icon) => ({
+        ItemType: 4,
+        RiotItemID: icon.id,
+        Name: icon.title,
+        ChampionID: null,
+        SkinlineID: null,
+        ImageURL: createCDNImageUrl(icon.imagePath),
+        ShopID: icon.contentId,
+    }));
+    return icons;
+}
+
+function processEmotes(): CatalogItemRecord[] {
+    const jsonData = fs.readFileSync('data/source/emotes.json', 'utf8');
+    const emoteJson: RawEmote[] = JSON.parse(jsonData);
+
+    const emotes: CatalogItemRecord[] = emoteJson.map((emote) => ({
+        ItemType: 3,
+        RiotItemID: emote.id,
+        Name: emote.name,
+        ChampionID: null,
+        SkinlineID: null,
+        ImageURL: createCDNImageUrl(emote.inventoryIcon),
+        ShopID: emote.contentId,
+    }));
+    return emotes;
 }
 
 function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
@@ -206,5 +240,11 @@ async function main() {
 
     const processedFinishers = processFinishers();
     await upsertCatalogItems(processedFinishers);
+
+    const processedIcons = processIcons();
+    await upsertCatalogItems(processedIcons);
+
+    const processedEmotes = processEmotes();
+    await upsertCatalogItems(processedEmotes);
 }
 main();

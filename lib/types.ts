@@ -96,6 +96,20 @@ export type RawMythicSale = {
     };
 };
 
+export type RawIcon = {
+    id: number;
+    contentId: string;
+    title: string;
+    imagePath: string;
+};
+
+export type RawEmote = {
+    id: number;
+    contentId: string;
+    name: string;
+    inventoryIcon: string;
+};
+
 // database types
 export type CatalogItemRecord = {
     ItemType: number;
