@@ -76,6 +76,7 @@ export type CatalogSaleRecord = {
     NormalPrice: number;
     SalePrice: number;
     PercentOff: number;
+    Currency: string;
     IsActive: boolean;
 };
 

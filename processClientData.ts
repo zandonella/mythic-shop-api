@@ -21,6 +21,7 @@ function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
         NormalPrice: sale.prices[0].cost,
         SalePrice: sale.sale!.prices[0].cost,
         PercentOff: Math.round(sale.sale!.prices[0].discount * 100),
+        Currency: sale.prices[0].currency,
         IsActive: sale.active,
     }));
     return minimizedSales;
