@@ -1,7 +1,14 @@
 #!/bin/bash
+set -euo pipefail
+
+# Launch Riot Client
+RIOT_EXE='C:\Riot Games\Riot Client\RiotClientServices.exe'
+"$RIOT_EXE" --launch-product=league_of_legends --launch-patchline=live &
+
 mkdir -p data/source
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/nexusfinishers.json > data/source/finishers.json
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-emotes.json > data/source/emotes.json
+
 
 # Skins
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/skins.json > data/source/skins.json
@@ -12,3 +19,8 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 # Icons
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icons.json > data/source/icons.json
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icon-sets.json > data/source/iconSets.json
+
+node processStaticData.ts
+node getClientData.js
+node processClientData.ts
+
