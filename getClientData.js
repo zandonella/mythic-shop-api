@@ -2,7 +2,17 @@ import { HasagiClient } from '@hasagi/core';
 import fs from 'fs';
 
 const client = new HasagiClient();
-await client.connect({ useWebSocket: false });
+
+try {
+    await client.connect({
+        useWebSocket: false,
+        maxConnectionAttempts: 12 * 5,
+        delayBetweenAttempts: 5000,
+    });
+} catch (error) {
+    console.error('Failed to connect to client. Exiting script.');
+    process.exit(20);
+}
 
 console.log('Connected to client successfully');
 
@@ -47,7 +57,7 @@ if (!storesLoaded) {
     console.error(
         'Stores did not load within the expected time. Exiting script.',
     );
-    process.exit(1);
+    process.exit(21);
 }
 
 try {

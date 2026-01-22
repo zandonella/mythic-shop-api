@@ -21,6 +21,39 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icon-sets.json > data/source/iconSets.json
 
 node processStaticData.ts
-node getClientData.js
+
+max_attempts=6
+attempt=1
+
+while (( attempt <= max_attempts )); do
+    echo "Attempt $attempt to get client data..."
+    set +e
+    node getClientData.js
+    exit_code=$?
+    set -e
+    case $exit_code in
+        0)
+            echo "Client data retrieved successfully."
+            break
+            ;;
+        20)
+            echo "Client did not load, likely updating. Retrying..."
+            ;;
+        21)
+            echo "Stores did not load within the expected time. Retrying..."
+            ;;
+        *)
+            echo "Unexpected error (code $exit_code). Exiting."
+            exit $exit_code
+            ;;
+    esac
+    ((attempt++))
+done
+
+if (( attempt > max_attempts )); then
+    echo "Failed to retrieve client data after $max_attempts attempts. Exiting."
+    exit 1
+fi
+
 node processClientData.ts
 
