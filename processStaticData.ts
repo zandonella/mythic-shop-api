@@ -74,7 +74,7 @@ function processFinishers(): CatalogItemRecord[] {
         ChampionID: null,
         SkinlineID: null,
         ImageURL: createCDNImageUrl(finisher.iconPath),
-        ShopID: finisher.contentId,
+        ItemID: finisher.contentId,
     }));
     return finishers;
 }
@@ -90,7 +90,7 @@ function processIcons(): CatalogItemRecord[] {
         ChampionID: null,
         SkinlineID: null,
         ImageURL: createCDNImageUrl(icon.imagePath),
-        ShopID: icon.contentId,
+        ItemID: icon.contentId,
     }));
     return icons;
 }
@@ -106,7 +106,7 @@ function processEmotes(): CatalogItemRecord[] {
         ChampionID: null,
         SkinlineID: null,
         ImageURL: createCDNImageUrl(emote.inventoryIcon),
-        ShopID: emote.contentId,
+        ItemID: emote.contentId,
     }));
     return emotes;
 }
@@ -155,7 +155,7 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
             ChampionID: championID,
             SkinlineID: skinlineId,
             ImageURL: baseImageUrl,
-            ShopID: skin.contentId,
+            ItemID: skin.contentId,
         };
 
         const chromas: CatalogItemRecord[] = [];
@@ -177,7 +177,7 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
                     ChampionID: championID,
                     SkinlineID: skinlineId,
                     ImageURL: chromaURL,
-                    ShopID: chroma.contentId,
+                    ItemID: chroma.contentId,
                 };
 
                 chromas.push(chromaSkin);
