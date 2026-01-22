@@ -6,6 +6,50 @@ await client.connect({ useWebSocket: false });
 
 console.log('Connected to client successfully');
 
+let storesLoaded = false;
+const maxRetries = 10;
+let retries = 0;
+let delay = 5000;
+
+while (!storesLoaded && retries < maxRetries) {
+    try {
+        // Wait for 5 seconds
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        // Check store status
+        const storeStatus = await client.request('get', '/lol-store/v1/status');
+        const shoppefrontStatus = await client.request(
+            'get',
+            '/lol-shoppefront/v1/ready',
+        );
+
+        console.log('store status:', storeStatus.storefrontIsRunning);
+        console.log('shoppefront status:', shoppefrontStatus);
+
+        // If stores are loaded, exit the loop
+        if (
+            storeStatus?.storefrontIsRunning == true &&
+            shoppefrontStatus === true
+        ) {
+            storesLoaded = true;
+            console.log('Stores are loaded and ready.');
+            break;
+        }
+    } catch (error) {
+        console.error('Error checking store status:', error);
+    } finally {
+        retries++;
+        delay = Math.min(delay * 1.5, 30000);
+    }
+}
+
+if (!storesLoaded) {
+    console.error(
+        'Stores did not load within the expected time. Exiting script.',
+    );
+    process.exit(1);
+}
+
 try {
     const mythicJSON = await client.request(
         'get',
@@ -19,7 +63,6 @@ try {
     console.log('Mythic shop data saved to mythicShop.json');
 } catch (error) {
     console.error('Error fetching catalog data:', error);
-    process.exit(1);
 }
 
 try {
@@ -32,5 +75,4 @@ try {
     console.log('Catalog data saved to catalog.json');
 } catch (error) {
     console.error('Error saving catalog data:', error);
-    process.exit(1);
 }
