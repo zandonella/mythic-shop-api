@@ -110,13 +110,13 @@ export type RawEmote = {
 
 // database types
 export type CatalogItemRecord = {
+    ItemID: string;
     ItemType: number;
     RiotItemID: number;
     ChampionID: number | null;
     Name: string;
     SkinlineID: number | null;
     ImageURL: string;
-    ShopID: string;
 };
 
 export type CatalogSaleRecord = {
