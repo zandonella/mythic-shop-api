@@ -154,6 +154,12 @@ async function deactivateOldSales(table: 'CatalogSale' | 'MythicSale') {
     }
 }
 
+function getNextRefreshTime(sales: CatalogSaleRecord[] | MythicSaleRecord[]) {
+    const nextDefaultRefresh = new Date();
+    nextDefaultRefresh.setDate(nextDefaultRefresh.getDate() + 1);
+    nextDefaultRefresh.setHours(16, 0, 0, 0);
+}
+
 // main function
 function main() {
     const sales = processCatalogSales();
