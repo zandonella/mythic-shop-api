@@ -19,17 +19,24 @@ function filterCatalogSales(salesData: RawCatalogSale[]) {
 }
 
 function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
-    const minimizedSales = sales.map((sale) => ({
-        RiotItemID: sale.itemId,
-        SaleStartAt: new Date(sale.sale!.startDate),
-        SaleEndAt: new Date(sale.sale!.endDate),
-        ItemType: 1,
-        NormalPrice: sale.prices[0].cost,
-        SalePrice: sale.sale!.prices[0].cost,
-        PercentOff: Math.round(sale.sale!.prices[0].discount * 100),
-        Currency: sale.prices[0].currency,
-        IsActive: sale.active,
-    }));
+    const minimizedSales = sales.map((sale) => {
+        const rawStartDate = new Date(sale.sale!.startDate);
+        const rawEndDate = new Date(sale.sale!.endDate);
+
+        rawStartDate.setHours(rawStartDate.getHours() + 6);
+        rawEndDate.setHours(rawEndDate.getHours() + 6);
+        return {
+            RiotItemID: sale.itemId,
+            SaleStartAt: rawStartDate,
+            SaleEndAt: rawEndDate,
+            ItemType: 1,
+            NormalPrice: sale.prices[0].cost,
+            SalePrice: sale.sale!.prices[0].cost,
+            PercentOff: Math.round(sale.sale!.prices[0].discount * 100),
+            Currency: sale.prices[0].currency,
+            IsActive: sale.active,
+        };
+    });
     return minimizedSales;
 }
 
