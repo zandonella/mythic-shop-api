@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+cd "C:\Users\zando\Desktop\mythic-shop-api"
+
 # Launch Riot Client
-RIOT_EXE='C:\Riot Games\Riot Client\RiotClientServices.exe'
+RIOT_EXE='/c/Riot Games/Riot Client/RiotClientServices.exe'
 "$RIOT_EXE" --launch-product=league_of_legends --launch-patchline=live &
 
 mkdir -p data/source
@@ -47,6 +49,8 @@ while (( attempt <= max_attempts )); do
             exit $exit_code
             ;;
     esac
+    RIOT_EXE='/c/Riot Games/Riot Client/RiotClientServices.exe'
+    "$RIOT_EXE" --launch-product=league_of_legends --launch-patchline=live &
     ((attempt++))
 done
 
@@ -56,4 +60,7 @@ if (( attempt > max_attempts )); then
 fi
 
 node processClientData.ts
+
+echo "All tasks completed successfully."
+exit 0
 
