@@ -220,12 +220,12 @@ async function scheduleNextRefresh(nextRefresh: Date) {
 // main function
 async function main() {
     const sales = processCatalogSales();
-    // upsertCatalogSales(sales);
-    // deactivateOldSales('CatalogSale');
+    upsertCatalogSales(sales);
+    deactivateOldSales('CatalogSale');
 
     const mythicSales = processMythicSales();
-    // upsertMythicSales(mythicSales);
-    // deactivateOldSales('MythicSale');
+    upsertMythicSales(mythicSales);
+    deactivateOldSales('MythicSale');
 
     const nextCatalogRefresh = getNextRefreshBeforeDefault(sales);
     const nextMythicRefresh = getNextRefreshBeforeDefault(mythicSales);
