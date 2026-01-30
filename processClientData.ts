@@ -9,6 +9,12 @@ import type {
 import { supabase } from './lib/supabase.ts';
 
 // helpers
+function minDate(a: Date | null, b: Date | null): Date | null {
+    if (a === null) return b;
+    if (b === null) return a;
+    return a.getTime() < b.getTime() ? a : b;
+}
+
 function filterCatalogSales(salesData: RawCatalogSale[]) {
     salesData = salesData.filter((sale) => sale.sale != null);
     salesData = salesData.filter(
@@ -161,21 +167,80 @@ async function deactivateOldSales(table: 'CatalogSale' | 'MythicSale') {
     }
 }
 
-function getNextRefreshTime(sales: CatalogSaleRecord[] | MythicSaleRecord[]) {
-    const nextDefaultRefresh = new Date();
-    nextDefaultRefresh.setDate(nextDefaultRefresh.getDate() + 1);
-    nextDefaultRefresh.setHours(16, 0, 0, 0);
+function getNext4PMPST(from: Date) {
+    const next = new Date(from);
+    next.setHours(16, 0, 0, 0);
+
+    if (from.getTime() >= next.getTime()) {
+        next.setDate(next.getDate() + 1);
+    }
+    return next;
+}
+
+function getNextRefreshBeforeDefault(
+    sales: CatalogSaleRecord[] | MythicSaleRecord[],
+) {
+    const now = new Date();
+    const nextDefaultRefresh = getNext4PMPST(now);
+
+    let earliest: Date | null = null;
+
+    for (const sale of sales) {
+        const saleEnd = sale.SaleEndAt;
+        const time = saleEnd.getTime();
+
+        if (time > now.getTime() && time < nextDefaultRefresh.getTime()) {
+            if (!earliest || time < earliest.getTime()) {
+                earliest = saleEnd;
+            }
+        }
+    }
+
+    return earliest;
+}
+
+async function scheduleNextRefresh(nextRefresh: Date) {
+    const res = await fetch('http://100.99.1.41:3000/schedule-wake', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            wake_at: nextRefresh.toISOString(),
+        }),
+    });
+
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+    }
+
+    console.log(await res.json());
 }
 
 // main function
-function main() {
+async function main() {
     const sales = processCatalogSales();
-    upsertCatalogSales(sales);
-    deactivateOldSales('CatalogSale');
+    // upsertCatalogSales(sales);
+    // deactivateOldSales('CatalogSale');
 
     const mythicSales = processMythicSales();
-    upsertMythicSales(mythicSales);
-    deactivateOldSales('MythicSale');
+    // upsertMythicSales(mythicSales);
+    // deactivateOldSales('MythicSale');
+
+    const nextCatalogRefresh = getNextRefreshBeforeDefault(sales);
+    const nextMythicRefresh = getNextRefreshBeforeDefault(mythicSales);
+
+    console.log('Next Catalog Refresh:', nextCatalogRefresh);
+    console.log('Next Mythic Refresh:', nextMythicRefresh);
+
+    const nextRefresh = minDate(nextCatalogRefresh, nextMythicRefresh);
+    console.log('Overall Next Refresh:', nextRefresh);
+
+    if (nextRefresh) {
+        await scheduleNextRefresh(nextRefresh);
+    } else {
+        console.log('No upcoming sales found to schedule a refresh.');
+    }
 }
 
 main();
