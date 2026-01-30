@@ -24,7 +24,7 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 
 node processStaticData.ts
 
-max_attempts=6
+max_attempts=3
 attempt=1
 
 while (( attempt <= max_attempts )); do
