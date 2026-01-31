@@ -136,6 +136,7 @@ async function upsertCatalogSales(sales: CatalogSaleRecord[]) {
 
     if (error) {
         console.error('Error upserting catalog sales:', error);
+        console.log("Failed Items:", sales)
     } else {
         console.log('Catalog sales upserted successfully.');
     }
@@ -148,6 +149,7 @@ async function upsertMythicSales(sales: MythicSaleRecord[]) {
 
     if (error) {
         console.error('Error upserting mythic sales:', error);
+        console.log("Failed Items:", sales)
     } else {
         console.log('Mythic sales upserted successfully.');
     }
