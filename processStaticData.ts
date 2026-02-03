@@ -14,6 +14,7 @@ import type {
     RawFinisher,
     RawIcon,
     RawEmote,
+    RawWard,
 } from './lib/types.ts';
 import fs from 'fs';
 
@@ -109,6 +110,22 @@ function processEmotes(): CatalogItemRecord[] {
         ItemID: emote.contentId,
     }));
     return emotes;
+}
+
+function processWards(): CatalogItemRecord[] {
+    const jsonData = fs.readFileSync('data/source/wards.json', 'utf8');
+    const wardJson: RawWard[] = JSON.parse(jsonData);
+
+    const wards: CatalogItemRecord[] = wardJson.map((ward) => ({
+        ItemType: 6,
+        RiotItemID: ward.id,
+        Name: ward.name,
+        ChampionID: null,
+        SkinlineID: null,
+        ImageURL: createCDNImageUrl(ward.wardImagePath),
+        ItemID: ward.contentId,
+    }));
+    return wards;
 }
 
 function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
@@ -246,5 +263,8 @@ async function main() {
 
     const processedEmotes = processEmotes();
     await upsertCatalogItems(processedEmotes);
+
+    const processedWards = processWards();
+    await upsertCatalogItems(processedWards);
 }
 main();

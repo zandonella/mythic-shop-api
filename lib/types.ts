@@ -101,6 +101,13 @@ export type RawIcon = {
     imagePath: string;
 };
 
+export type RawWard = {
+    id: number;
+    contentId: string;
+    name: string;
+    wardImagePath: string;
+};
+
 export type RawEmote = {
     id: number;
     contentId: string;

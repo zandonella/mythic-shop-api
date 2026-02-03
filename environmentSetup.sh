@@ -13,7 +13,6 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 
 # Icons
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icons.json > data/source/icons.json
-curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icon-sets.json > data/source/iconSets.json
 
-
-
+# Wards
+curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/ward-skins.json > data/source/wards.json
