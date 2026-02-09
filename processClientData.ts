@@ -136,7 +136,7 @@ async function upsertCatalogSales(sales: CatalogSaleRecord[]) {
 
     if (error) {
         console.error('Error upserting catalog sales:', error);
-        console.log("Failed Items:", sales)
+        console.log('Failed Items:', sales);
     } else {
         console.log('Catalog sales upserted successfully.');
     }
@@ -145,11 +145,13 @@ async function upsertCatalogSales(sales: CatalogSaleRecord[]) {
 async function upsertMythicSales(sales: MythicSaleRecord[]) {
     const { error } = await supabase
         .from('MythicSale')
-        .upsert(sales, { onConflict: 'OfferID, SaleStartAt' });
+        .upsert(sales, {
+            onConflict: 'SaleStartAt,PrimaryItemID,Section,SaleEndAt',
+        });
 
     if (error) {
         console.error('Error upserting mythic sales:', error);
-        console.log("Failed Items:", sales)
+        console.log('Failed Items:', sales);
     } else {
         console.log('Mythic sales upserted successfully.');
     }
