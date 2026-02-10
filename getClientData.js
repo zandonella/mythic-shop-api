@@ -17,7 +17,7 @@ try {
 console.log('Connected to client successfully');
 
 let storesLoaded = false;
-const maxRetries = 10;
+const maxRetries = 5;
 let retries = 0;
 let delay = 5000;
 
