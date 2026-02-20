@@ -6,7 +6,7 @@ const client = new HasagiClient();
 try {
     await client.connect({
         useWebSocket: false,
-        maxConnectionAttempts: 12 * 5,
+        maxConnectionAttempts: 12,
         delayBetweenAttempts: 5000,
     });
 } catch (error) {
