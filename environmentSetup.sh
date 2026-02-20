@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "C:\Users\zando\Desktop\mythic-shop-api"
 
 mkdir -p data/source
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/nexusfinishers.json > data/source/finishers.json
@@ -16,3 +17,5 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 
 # Wards
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/ward-skins.json > data/source/wards.json
+
+node processStaticData.ts
