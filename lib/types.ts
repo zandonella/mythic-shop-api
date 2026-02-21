@@ -37,27 +37,24 @@ export type RawFinisher = {
 
 export type RawSkinsById = Record<string, RawSkin>;
 
+export type price = {
+    cost: number;
+    currency: string;
+    discount: number;
+};
+
 export type RawCatalogSale = {
     active: boolean;
     inventoryType: string;
+    inactiveDate: string | null;
     itemId: number;
-    prices: [
-        {
-            cost: number;
-            currency: string;
-        },
-    ];
+    prices: price[];
     sale: {
         endDate: Date;
-        prices: [
-            {
-                cost: number;
-                currency: string;
-                discount: number;
-            },
-        ];
+        prices: price[];
         startDate: Date;
     } | null;
+    releaseDate: string;
     subInventoryType: string;
 };
 
@@ -136,6 +133,7 @@ export type CatalogSaleRecord = {
     PercentOff: number;
     Currency: string;
     IsActive: boolean;
+    Limited: boolean;
 };
 
 export type sectionType = 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'FEATURED';

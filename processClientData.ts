@@ -5,6 +5,7 @@ import type {
     RawCatalogSale,
     RawMythicSale,
     sectionType,
+    price,
 } from './lib/types.js';
 import { supabase } from './lib/supabase.ts';
 
@@ -13,6 +14,31 @@ function minDate(a: Date | null, b: Date | null): Date | null {
     if (a === null) return b;
     if (b === null) return a;
     return a.getTime() < b.getTime() ? a : b;
+}
+
+function getPriceInfo(prices: price[]): price {
+    const price = prices.find((p) => p.cost != 0);
+    if (!price) {
+        return { cost: 0, currency: 'UNKNOWN', discount: 0 };
+    }
+    return price;
+}
+
+function getItemTypeByName(name: string) {
+    switch (name) {
+        case 'CHAMPION_SKIN':
+            return 1;
+        case 'RECOLOR':
+            return 2;
+        case 'EMOTE':
+            return 3;
+        case 'SUMMONER_ICON':
+            return 4;
+        case 'WARD_SKIN':
+            return 6;
+        default:
+            return 0;
+    }
 }
 
 function filterCatalogSales(salesData: RawCatalogSale[]) {
@@ -24,10 +50,33 @@ function filterCatalogSales(salesData: RawCatalogSale[]) {
     return salesData;
 }
 
+function getLimitedSales(salesData: RawCatalogSale[]) {
+    salesData = salesData.filter((sale) => sale.inactiveDate != null);
+    salesData = salesData.filter(
+        (sale) =>
+            sale.inventoryType == 'CHAMPION_SKIN' ||
+            sale.inventoryType == 'SUMMONER_ICON' ||
+            sale.inventoryType == 'WARD_SKIN' ||
+            sale.inventoryType == 'EMOTE',
+    );
+    salesData = salesData.filter((sale) => {
+        const inactiveDate = new Date(sale.inactiveDate!);
+        const now = new Date();
+        const sixMonthsFromNow = new Date();
+        sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+        return inactiveDate > now && inactiveDate < sixMonthsFromNow;
+    });
+
+    return salesData;
+}
+
 function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
     const minimizedSales = sales.map((sale) => {
         const rawStartDate = new Date(sale.sale!.startDate);
         const rawEndDate = new Date(sale.sale!.endDate);
+
+        const priceInfo = getPriceInfo(sale.prices);
+        const salePriceInfo = getPriceInfo(sale.sale!.prices);
 
         rawStartDate.setHours(rawStartDate.getHours() + 6);
         rawEndDate.setHours(rawEndDate.getHours() + 6);
@@ -35,12 +84,55 @@ function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
             RiotItemID: sale.itemId,
             SaleStartAt: rawStartDate,
             SaleEndAt: rawEndDate,
-            ItemType: 1,
-            NormalPrice: sale.prices[0].cost,
-            SalePrice: sale.sale!.prices[0].cost,
-            PercentOff: Math.round(sale.sale!.prices[0].discount * 100),
-            Currency: sale.prices[0].currency,
+            ItemType: getItemTypeByName(sale.inventoryType),
+            NormalPrice: priceInfo.cost,
+            SalePrice: salePriceInfo.cost,
+            PercentOff: Math.round(salePriceInfo.discount * 100),
+            Currency: priceInfo.currency,
             IsActive: sale.active,
+            Limited: false,
+        };
+    });
+    return minimizedSales;
+}
+
+function minimizeLimitedSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
+    const minimizedSales = sales.map((sale) => {
+        const rawStartDate = new Date(sale.releaseDate);
+        const rawEndDate = new Date(sale.inactiveDate!);
+        const priceInfo = getPriceInfo(sale.prices);
+
+        let salePrice;
+        let discount = 0;
+        let itemType;
+
+        if (sale.subInventoryType === 'RECOLOR') {
+            itemType = getItemTypeByName(sale.subInventoryType);
+        } else {
+            itemType = getItemTypeByName(sale.inventoryType);
+        }
+
+        if (sale.sale) {
+            const salePriceInfo = getPriceInfo(sale.sale.prices);
+            salePrice = salePriceInfo.cost;
+            discount = salePriceInfo.discount;
+        } else {
+            salePrice = priceInfo.cost;
+        }
+
+        rawStartDate.setHours(rawStartDate.getHours() + 6);
+        rawEndDate.setHours(rawEndDate.getHours() + 6);
+        return {
+            RiotItemID: sale.itemId,
+            SaleStartAt: rawStartDate,
+            SaleEndAt: rawEndDate,
+            ItemType: itemType,
+            NormalPrice: priceInfo.cost,
+            SalePrice: salePrice,
+            PercentOff: Math.round(discount * 100),
+            Currency: priceInfo.currency,
+            IsActive: sale.active,
+            Limited: true,
         };
     });
     return minimizedSales;
@@ -111,9 +203,12 @@ function processCatalogSales(): CatalogSaleRecord[] {
     const salesJsonData = fs.readFileSync('data/source/catalog.json', 'utf8');
     const salesData = JSON.parse(salesJsonData) as RawCatalogSale[];
     const filteredSales = filterCatalogSales(salesData);
-    const minimizedSales = minimizeCatalogSale(filteredSales);
+    const limitedSales = getLimitedSales(salesData);
 
-    return minimizedSales;
+    const minimizedSales = minimizeCatalogSale(filteredSales);
+    const minimizedLimitedSales = minimizeLimitedSale(limitedSales);
+
+    return minimizedSales.concat(minimizedLimitedSales);
 }
 
 function processMythicSales() {
@@ -143,11 +238,9 @@ async function upsertCatalogSales(sales: CatalogSaleRecord[]) {
 }
 
 async function upsertMythicSales(sales: MythicSaleRecord[]) {
-    const { error } = await supabase
-        .from('MythicSale')
-        .upsert(sales, {
-            onConflict: 'SaleStartAt,PrimaryItemID,Section,SaleEndAt',
-        });
+    const { error } = await supabase.from('MythicSale').upsert(sales, {
+        onConflict: 'SaleStartAt,PrimaryItemID,Section,SaleEndAt',
+    });
 
     if (error) {
         console.error('Error upserting mythic sales:', error);
