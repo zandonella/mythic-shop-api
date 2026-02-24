@@ -15,11 +15,15 @@ import type {
     RawIcon,
     RawEmote,
     RawWard,
+    RawUniverse,
+    UniverseRecord,
 } from './lib/types.ts';
 import fs from 'fs';
 
 const skinlineJsonData = fs.readFileSync('data/source/skinlines.json', 'utf8');
 const skinlines: RawSkinline[] = JSON.parse(skinlineJsonData);
+const universeJsonData = fs.readFileSync('data/source/universes.json', 'utf8');
+const universes: RawUniverse[] = JSON.parse(universeJsonData);
 
 const championJsonData = fs.readFileSync(
     'data/source/champion-summary.json',
@@ -42,6 +46,17 @@ function ChampionDictionary(): Map<string, number> {
     return championDictionary;
 }
 
+function UniverseDictionary(): Map<number, number> {
+    const universeDictionary = new Map<number, number>();
+    for (const universe of universes) {
+        for (const skinSetId of universe.skinSets) {
+            universeDictionary.set(skinSetId, universe.id);
+        }
+    }
+
+    return universeDictionary;
+}
+
 // processing functions
 function processChampions(): ChampionRecord[] {
     const reducedChamps = champions
@@ -55,14 +70,25 @@ function processChampions(): ChampionRecord[] {
     return reducedChamps;
 }
 
-function processSkinlines(): SkinlineRecord[] {
+function processSkinlines(
+    universeDictionary: Map<number, number>,
+): SkinlineRecord[] {
     const reducedSkinlines = skinlines
         .filter((skinline) => skinline.id > 0)
         .map((skinline) => ({
             id: skinline.id,
             Name: skinline.name,
+            UniverseID: universeDictionary.get(skinline.id) || 0,
         }));
     return reducedSkinlines;
+}
+
+function processUniverses(): UniverseRecord[] {
+    const reducedUniverses = universes.map((universe) => ({
+        id: universe.id,
+        Name: universe.name,
+    }));
+    return reducedUniverses;
 }
 
 function processFinishers(): CatalogItemRecord[] {
@@ -232,6 +258,17 @@ async function upsertChampionData(champions: ChampionRecord[]) {
     }
 }
 
+async function upsertUniverseData(universes: UniverseRecord[]) {
+    const { error } = await supabase
+        .from('Universe')
+        .upsert(universes, { onConflict: 'id' });
+    if (error) {
+        console.error('Error inserting universe data:', error);
+    } else {
+        console.log(`Inserted/Updated universe data successfully.`);
+    }
+}
+
 async function upsertSkinlineData(skinlines: SkinlineRecord[]) {
     const { error } = await supabase
         .from('Skinline')
@@ -245,11 +282,15 @@ async function upsertSkinlineData(skinlines: SkinlineRecord[]) {
 
 async function main() {
     const ChampionDict = ChampionDictionary();
+    const UniverseDict = UniverseDictionary();
 
     const processedChampions = processChampions();
     await upsertChampionData(processedChampions);
 
-    const processedSkinlines = processSkinlines();
+    const processedUniverses = processUniverses();
+    await upsertUniverseData(processedUniverses);
+
+    const processedSkinlines = processSkinlines(UniverseDict);
     await upsertSkinlineData(processedSkinlines);
 
     const processedSkins = processSkins(ChampionDict);

@@ -10,7 +10,7 @@ curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/skins.json > data/source/skins.json
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/skinlines.json > data/source/skinlines.json
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-summary.json > data/source/champion-summary.json
-
+curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/universes.json > data/source/universes.json
 
 # Icons
 curl https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/summoner-icons.json > data/source/icons.json

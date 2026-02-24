@@ -21,6 +21,12 @@ export type RawSkinline = {
     name: string;
 };
 
+export type RawUniverse = {
+    id: number;
+    name: string;
+    skinSets: number[];
+};
+
 export type RawChroma = {
     id: number;
     name: string;
@@ -162,6 +168,12 @@ export type ChampionRecord = {
 };
 
 export type SkinlineRecord = {
+    id: number;
+    Name: string;
+    UniverseID: number;
+};
+
+export type UniverseRecord = {
     id: number;
     Name: string;
 };
