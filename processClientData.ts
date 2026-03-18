@@ -264,13 +264,15 @@ async function deactivateOldSales(table: 'CatalogSale' | 'MythicSale') {
     }
 }
 
-function getNext4PMPST(from: Date) {
-    const next = new Date(from);
-    next.setHours(16, 0, 0, 0);
+function getUTCMidnight(date: Date) {
+    const result = new Date(date);
+    result.setUTCHours(0, 0, 0, 0);
+    return result;
+}
 
-    if (from.getTime() >= next.getTime()) {
-        next.setDate(next.getDate() + 1);
-    }
+function getNextRefresh(from: Date) {
+    const next = getUTCMidnight(from);
+    next.setUTCDate(next.getUTCDate() + 1);
     return next;
 }
 
@@ -278,7 +280,11 @@ function getNextRefreshBeforeDefault(
     sales: CatalogSaleRecord[] | MythicSaleRecord[],
 ) {
     const now = new Date();
-    const nextDefaultRefresh = getNext4PMPST(now);
+
+    const currentDayUTCMidnight = getUTCMidnight(now);
+    const nextDefaultRefresh = getNextRefresh(now);
+
+    console.log(currentDayUTCMidnight.toISOString(), nextDefaultRefresh.toISOString());
 
     let earliest: Date | null = null;
 
@@ -286,7 +292,7 @@ function getNextRefreshBeforeDefault(
         const saleEnd = sale.SaleEndAt;
         const time = saleEnd.getTime();
 
-        if (time > now.getTime() && time < nextDefaultRefresh.getTime()) {
+        if (time > currentDayUTCMidnight.getTime() && time < nextDefaultRefresh.getTime()) {
             if (!earliest || time < earliest.getTime()) {
                 earliest = saleEnd;
             }
@@ -323,6 +329,9 @@ async function main() {
     const mythicSales = processMythicSales();
     upsertMythicSales(mythicSales);
     deactivateOldSales('MythicSale');
+
+    console.log(sales[0])
+    console.log(mythicSales[0])
 
     const nextCatalogRefresh = getNextRefreshBeforeDefault(sales);
     const nextMythicRefresh = getNextRefreshBeforeDefault(mythicSales);
