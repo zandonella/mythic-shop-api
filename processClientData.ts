@@ -41,17 +41,23 @@ function getItemTypeByName(name: string) {
     }
 }
 
+function hasLimitedAvailabilityTag(sale: RawCatalogSale) {
+    return sale.tags?.includes('limited availability') ?? false;
+}
+
 function filterCatalogSales(salesData: RawCatalogSale[]) {
     salesData = salesData.filter((sale) => sale.sale != null);
     salesData = salesData.filter(
         (sale) => sale.inventoryType == 'CHAMPION_SKIN',
     );
     salesData = salesData.filter((sale) => sale.subInventoryType != 'RECOLOR');
+    salesData = salesData.filter((sale) => !hasLimitedAvailabilityTag(sale));
     return salesData;
 }
 
 function getLimitedSales(salesData: RawCatalogSale[]) {
     salesData = salesData.filter((sale) => sale.inactiveDate != null);
+    salesData = salesData.filter((sale) => hasLimitedAvailabilityTag(sale));
     salesData = salesData.filter(
         (sale) =>
             sale.inventoryType == 'CHAMPION_SKIN' ||
@@ -136,6 +142,18 @@ function minimizeLimitedSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
         };
     });
     return minimizedSales;
+}
+
+function dedupeSales(sales: CatalogSaleRecord[]) {
+    const map = new Map<string, CatalogSaleRecord>();
+
+    for (const sale of sales) {
+        const key = `${sale.RiotItemID}-${sale.SaleStartAt.toISOString()}-${sale.SaleEndAt.toISOString()}`;
+        if (!map.has(key)) {
+            map.set(key, sale);
+        }
+    }
+    return Array.from(map.values());
 }
 
 function getPrimaryPurchaseUnit(entry: RawMythicSale['catalogEntries'][0]) {
@@ -284,7 +302,10 @@ function getNextRefreshBeforeDefault(
     const currentDayUTCMidnight = getUTCMidnight(now);
     const nextDefaultRefresh = getNextRefresh(now);
 
-    console.log(currentDayUTCMidnight.toISOString(), nextDefaultRefresh.toISOString());
+    console.log(
+        currentDayUTCMidnight.toISOString(),
+        nextDefaultRefresh.toISOString(),
+    );
 
     let earliest: Date | null = null;
 
@@ -292,7 +313,10 @@ function getNextRefreshBeforeDefault(
         const saleEnd = sale.SaleEndAt;
         const time = saleEnd.getTime();
 
-        if (time > currentDayUTCMidnight.getTime() && time < nextDefaultRefresh.getTime()) {
+        if (
+            time > currentDayUTCMidnight.getTime() &&
+            time < nextDefaultRefresh.getTime()
+        ) {
             if (!earliest || time < earliest.getTime()) {
                 earliest = saleEnd;
             }
@@ -322,16 +346,13 @@ async function scheduleNextRefresh(nextRefresh: Date) {
 
 // main function
 async function main() {
-    const sales = processCatalogSales();
+    const sales = dedupeSales(processCatalogSales());
     upsertCatalogSales(sales);
     deactivateOldSales('CatalogSale');
 
     const mythicSales = processMythicSales();
     upsertMythicSales(mythicSales);
     deactivateOldSales('MythicSale');
-
-    console.log(sales[0])
-    console.log(mythicSales[0])
 
     const nextCatalogRefresh = getNextRefreshBeforeDefault(sales);
     const nextMythicRefresh = getNextRefreshBeforeDefault(mythicSales);

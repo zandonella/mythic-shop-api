@@ -62,6 +62,7 @@ export type RawCatalogSale = {
     } | null;
     releaseDate: string;
     subInventoryType: string;
+    tags: string[];
 };
 
 export type RawMythicSale = {
