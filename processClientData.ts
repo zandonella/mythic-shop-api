@@ -42,7 +42,9 @@ function getItemTypeByName(name: string) {
 }
 
 function hasLimitedAvailabilityTag(sale: RawCatalogSale) {
-    return sale.tags?.includes('limited availability') ?? false;
+    return (
+        sale.tags?.some((tag) => tag.toLowerCase().includes('limited')) ?? false
+    );
 }
 
 function filterCatalogSales(salesData: RawCatalogSale[]) {
