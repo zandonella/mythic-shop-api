@@ -128,6 +128,8 @@ export type CatalogItemRecord = {
     Name: string;
     SkinlineID: number | null;
     ImageURL: string;
+    ParentItemID: string | null;
+    SortSection: number;
 };
 
 export type CatalogSaleRecord = {

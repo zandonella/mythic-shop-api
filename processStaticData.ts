@@ -102,6 +102,8 @@ function processFinishers(): CatalogItemRecord[] {
         SkinlineID: null,
         ImageURL: createCDNImageUrl(finisher.iconPath),
         ItemID: finisher.contentId,
+        ParentItemID: null,
+        SortSection: 5,
     }));
     return finishers;
 }
@@ -118,6 +120,8 @@ function processIcons(): CatalogItemRecord[] {
         SkinlineID: null,
         ImageURL: createCDNImageUrl(icon.imagePath),
         ItemID: icon.contentId,
+        ParentItemID: icon.contentId,
+        SortSection: 4,
     }));
     return icons;
 }
@@ -134,6 +138,8 @@ function processEmotes(): CatalogItemRecord[] {
         SkinlineID: null,
         ImageURL: createCDNImageUrl(emote.inventoryIcon),
         ItemID: emote.contentId,
+        ParentItemID: emote.contentId,
+        SortSection: 3,
     }));
     return emotes;
 }
@@ -150,6 +156,8 @@ function processWards(): CatalogItemRecord[] {
         SkinlineID: null,
         ImageURL: createCDNImageUrl(ward.wardImagePath),
         ItemID: ward.contentId,
+        ParentItemID: ward.contentId,
+        SortSection: 6,
     }));
     return wards;
 }
@@ -199,6 +207,8 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
             SkinlineID: skinlineId,
             ImageURL: baseImageUrl,
             ItemID: skin.contentId,
+            ParentItemID: skin.contentId,
+            SortSection: 1,
         };
 
         const chromas: CatalogItemRecord[] = [];
@@ -221,6 +231,8 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
                     SkinlineID: skinlineId,
                     ImageURL: chromaURL,
                     ItemID: chroma.contentId,
+                    ParentItemID: baseSkin.ItemID,
+                    SortSection: 1,
                 };
 
                 chromas.push(chromaSkin);
