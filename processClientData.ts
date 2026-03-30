@@ -83,11 +83,14 @@ function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
         const rawStartDate = new Date(sale.sale!.startDate);
         const rawEndDate = new Date(sale.sale!.endDate);
 
+        const now = new Date();
+        const isActive = rawStartDate <= now && rawEndDate > now;
+
         const priceInfo = getPriceInfo(sale.prices);
         const salePriceInfo = getPriceInfo(sale.sale!.prices);
 
-        rawStartDate.setHours(rawStartDate.getHours() + 6);
-        rawEndDate.setHours(rawEndDate.getHours() + 6);
+        // rawStartDate.setHours(rawStartDate.getHours() + 6);
+        // rawEndDate.setHours(rawEndDate.getHours() + 6);
         return {
             RiotItemID: sale.itemId,
             SaleStartAt: rawStartDate,
@@ -97,7 +100,7 @@ function minimizeCatalogSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
             SalePrice: salePriceInfo.cost,
             PercentOff: Math.round(salePriceInfo.discount * 100),
             Currency: priceInfo.currency,
-            IsActive: sale.active,
+            IsActive: isActive,
             Limited: false,
         };
     });
@@ -109,6 +112,9 @@ function minimizeLimitedSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
         const rawStartDate = new Date(sale.releaseDate);
         const rawEndDate = new Date(sale.inactiveDate!);
         const priceInfo = getPriceInfo(sale.prices);
+
+        const now = new Date();
+        const isActive = rawStartDate <= now && rawEndDate > now;
 
         let salePrice;
         let discount = 0;
@@ -128,8 +134,8 @@ function minimizeLimitedSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
             salePrice = priceInfo.cost;
         }
 
-        rawStartDate.setHours(rawStartDate.getHours() + 6);
-        rawEndDate.setHours(rawEndDate.getHours() + 6);
+        // rawStartDate.setHours(rawStartDate.getHours() + 6);
+        // rawEndDate.setHours(rawEndDate.getHours() + 6);
         return {
             RiotItemID: sale.itemId,
             SaleStartAt: rawStartDate,
@@ -139,7 +145,7 @@ function minimizeLimitedSale(sales: RawCatalogSale[]): CatalogSaleRecord[] {
             SalePrice: salePrice,
             PercentOff: Math.round(discount * 100),
             Currency: priceInfo.currency,
-            IsActive: sale.active,
+            IsActive: isActive,
             Limited: true,
         };
     });
@@ -349,12 +355,12 @@ async function scheduleNextRefresh(nextRefresh: Date) {
 // main function
 async function main() {
     const sales = dedupeSales(processCatalogSales());
-    upsertCatalogSales(sales);
-    deactivateOldSales('CatalogSale');
+    await upsertCatalogSales(sales);
+    await deactivateOldSales('CatalogSale');
 
     const mythicSales = processMythicSales();
-    upsertMythicSales(mythicSales);
-    deactivateOldSales('MythicSale');
+    await upsertMythicSales(mythicSales);
+    await deactivateOldSales('MythicSale');
 
     const nextCatalogRefresh = getNextRefreshBeforeDefault(sales);
     const nextMythicRefresh = getNextRefreshBeforeDefault(mythicSales);
