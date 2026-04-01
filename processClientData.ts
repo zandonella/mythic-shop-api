@@ -251,26 +251,103 @@ function processMythicSales() {
 
 // upsert functions
 async function upsertCatalogSales(sales: CatalogSaleRecord[]) {
-    const { error } = await supabase
-        .from('CatalogSale')
-        .upsert(sales, { onConflict: 'RiotItemID,SaleStartAt,SaleEndAt' });
+    const riotItemIds = [...new Set(sales.map((s) => s.RiotItemID))];
+
+    const { data: existingItems, error: existingError } = await supabase
+        .from('CatalogItem')
+        .select('RiotItemID')
+        .in('RiotItemID', riotItemIds);
+
+    if (existingError) {
+        console.error('Error fetching existing catalog items:', existingError);
+        return;
+    }
+
+    const existingIdSet = new Set(existingItems.map((item) => item.RiotItemID));
+
+    const validSales = sales.filter((sale) =>
+        existingIdSet.has(sale.RiotItemID),
+    );
+    const skippedSales = sales.filter(
+        (sale) => !existingIdSet.has(sale.RiotItemID),
+    );
+
+    if (skippedSales.length > 0) {
+        console.warn(
+            'Skipping catalog sales with missing CatalogItem rows:',
+            skippedSales.map((s) => ({
+                RiotItemID: s.RiotItemID,
+                SaleStartAt: s.SaleStartAt,
+                SaleEndAt: s.SaleEndAt,
+                DiscountPercent: s.PercentOff,
+                ItemType: s.ItemType,
+            })),
+        );
+    }
+
+    if (validSales.length === 0) {
+        console.log('No valid catalog sales to upsert.');
+        return;
+    }
+
+    const { error } = await supabase.from('CatalogSale').upsert(validSales, {
+        onConflict: 'RiotItemID,SaleStartAt,SaleEndAt',
+    });
 
     if (error) {
         console.error('Error upserting catalog sales:', error);
-        console.log('Failed Items:', sales);
+        console.log('Failed Items:', validSales);
     } else {
         console.log('Catalog sales upserted successfully.');
     }
 }
 
 async function upsertMythicSales(sales: MythicSaleRecord[]) {
-    const { error } = await supabase.from('MythicSale').upsert(sales, {
+    const primaryIds = [...new Set(sales.map((s) => s.PrimaryItemID))];
+
+    const { data: existingItems, error: existingError } = await supabase
+        .from('CatalogItem')
+        .select('ItemID')
+        .in('ItemID', primaryIds);
+
+    if (existingError) {
+        console.error('Error fetching existing catalog items:', existingError);
+        return;
+    }
+
+    const existingIdSet = new Set(existingItems.map((item) => item.ItemID));
+
+    const validSales = sales.filter((sale) =>
+        existingIdSet.has(sale.PrimaryItemID),
+    );
+    const skippedSales = sales.filter(
+        (sale) => !existingIdSet.has(sale.PrimaryItemID),
+    );
+
+    if (skippedSales.length > 0) {
+        console.warn(
+            'Skipping mythic sales with missing CatalogItem rows:',
+            skippedSales.map((s) => ({
+                OfferID: s.OfferID,
+                PrimaryItemID: s.PrimaryItemID,
+                Section: s.Section,
+                BundleType: s.BundleType,
+            })),
+        );
+    }
+
+    if (validSales.length === 0) {
+        console.log('No valid mythic sales to upsert.');
+        return;
+    }
+
+    const { error } = await supabase.from('MythicSale').upsert(validSales, {
         onConflict: 'SaleStartAt,PrimaryItemID,Section,SaleEndAt',
     });
 
     if (error) {
         console.error('Error upserting mythic sales:', error);
-        console.log('Failed Items:', sales);
+        console.log('Failed Items:', validSales);
     } else {
         console.log('Mythic sales upserted successfully.');
     }
