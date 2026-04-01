@@ -36,3 +36,9 @@ export function createCDNImageUrl(imagePath: string): string {
 // console.log(getCommunityDragonUrl(testIcon));
 
 // console.log(createCDNImageUrl(testTile));
+
+const title =
+    '/lol-game-data/assets/ASSETS/PlayerTitles/1409_AprilFools_AchievementTitle.svg';
+const url = getCommunityDragonUrl(title);
+const cdnUrl = createCDNImageUrl(title);
+console.log(cdnUrl);
