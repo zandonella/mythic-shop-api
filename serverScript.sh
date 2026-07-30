@@ -18,6 +18,7 @@ launch_league() {
     local riot_protocol
     local eligibility
     local launch_url
+    local launch_status
 
     if [[ -z "${LOCALAPPDATA:-}" ]]; then
         echo "LOCALAPPDATA is not set, so the Riot Client lockfile cannot be located."
@@ -48,16 +49,34 @@ launch_league() {
 
                 if [[ "$eligibility" == "true" ]]; then
                     launch_url="https://127.0.0.1:$riot_port/product-launcher/v1/products/league_of_legends/patchlines/live"
-                    if curl --fail --silent --show-error --insecure \
+                    launch_status="$(
+                        curl --silent --show-error --insecure \
                         --connect-timeout 2 \
-                        --max-time 10 \
+                        --max-time 30 \
                         --user "riot:$riot_password" \
                         --request POST \
+                        --output /dev/null \
+                        --write-out '%{http_code}' \
                         "$launch_url" \
-                        >/dev/null; then
-                        echo "League launch requested through Riot Client."
-                        return 0
-                    fi
+                        || true
+                    )"
+
+                    case "$launch_status" in
+                        2??)
+                            echo "League launch requested through Riot Client."
+                            return 0
+                            ;;
+                        423)
+                            echo "Riot Client reports that a League launch is already in progress."
+                            return 0
+                            ;;
+                        000)
+                            echo "Riot Client did not finish the League launch request. Retrying."
+                            ;;
+                        *)
+                            echo "Riot Client rejected the League launch request with HTTP $launch_status. Retrying."
+                            ;;
+                    esac
                 fi
             fi
         fi

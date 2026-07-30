@@ -104,6 +104,8 @@ bash serverScript.sh
 
 `serverScript.sh` starts Riot Client, waits for its authenticated local API to report that League is launch eligible, and sends the same product-launch request as Riot Client's Play button. It then pulls live rotation data and processes it. Client startup and store-load failures exit immediately so the Windows startup wrapper can terminate wedged Riot and League processes before retrying the complete run. The Riot Client readiness wait defaults to 300 seconds and can be changed with `RIOT_LAUNCH_TIMEOUT_SECONDS`.
 
+The Riot launch request allows 30 seconds because Riot Client can take approximately 20 seconds to accept it. HTTP 423 means an earlier request already started the launch, so the script proceeds to League connection polling instead of repeatedly submitting duplicate requests.
+
 To test only the new launch flow without reading client data or writing to Supabase, use:
 
 ```sh
