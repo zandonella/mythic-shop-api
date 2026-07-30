@@ -33,20 +33,40 @@ const championJsonData = fs.readFileSync(
     'utf8',
 );
 const champions: RawChampion[] = JSON.parse(championJsonData);
+const MIN_CHAMPION_ID = 1;
+const MAX_DATABASE_CHAMPION_ID = 32767;
 
 // helpers
 function normalizeChampionKey(key: string): string {
     return key.trim().toLowerCase();
 }
 
+function isDatabaseChampion(champion: RawChampion): boolean {
+    return (
+        champion.id >= MIN_CHAMPION_ID &&
+        champion.id <= MAX_DATABASE_CHAMPION_ID
+    );
+}
+
 function ChampionDictionary(): Map<string, number> {
     const championDictionary = new Map<string, number>();
     for (const champ of champions) {
-        if (champ.id < 0) continue;
+        if (!isDatabaseChampion(champ)) continue;
         championDictionary.set(normalizeChampionKey(champ.alias), champ.id);
     }
 
     return championDictionary;
+}
+
+function ExcludedChampionAliases(): Set<string> {
+    return new Set(
+        champions
+            .filter(
+                (champion) =>
+                    champion.id > 0 && !isDatabaseChampion(champion),
+            )
+            .map((champion) => normalizeChampionKey(champion.alias)),
+    );
 }
 
 function UniverseDictionary(): Map<number, number> {
@@ -63,7 +83,7 @@ function UniverseDictionary(): Map<number, number> {
 // processing functions
 function processChampions(): ChampionRecord[] {
     const reducedChamps = champions
-        .filter((champ) => champ.id < 66600 && champ.id > 0)
+        .filter(isDatabaseChampion)
         .map((champ) => ({
             id: champ.id,
             Slug: champ.alias,
@@ -165,7 +185,10 @@ function processWards(): CatalogItemRecord[] {
     return wards;
 }
 
-function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
+function processSkins(
+    ChampionDict: Map<string, number>,
+    excludedChampionAliases: Set<string>,
+): CatalogItemRecord[] {
     const jsonData = fs.readFileSync('data/source/skins.json', 'utf8');
 
     const skinJson: RawSkinsById = JSON.parse(jsonData);
@@ -189,7 +212,12 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
             return [];
         }
 
-        const championID = ChampionDict.get(normalizeChampionKey(champion));
+        const championKey = normalizeChampionKey(champion);
+        if (excludedChampionAliases.has(championKey)) {
+            return [];
+        }
+
+        const championID = ChampionDict.get(championKey);
         if (!championID) {
             console.warn(
                 `Could not determine champion ID for skin: ${skin.name} (ID: ${skin.id})`,
@@ -266,16 +294,18 @@ function processSkins(ChampionDict: Map<string, number>): CatalogItemRecord[] {
 
 // upsert functions
 
-async function upsertCatalogItems(items: CatalogItemRecord[]) {
+async function upsertCatalogItems(
+    items: CatalogItemRecord[],
+    itemGroup: string,
+) {
     const { error } = await supabase
         .from('CatalogItem')
         .upsert(items, { onConflict: 'ItemType,RiotItemID' });
 
     if (error) {
-        console.error('Error inserting catalog items:', error);
-        await logger.error('Error inserting catalog items.');
+        throw new Error(`Failed to upsert ${itemGroup}: ${error.message}`);
     } else {
-        console.log(`Inserted/Updated catalog items successfully.`);
+        console.log(`Inserted/Updated ${itemGroup} successfully.`);
     }
 }
 
@@ -284,8 +314,7 @@ async function upsertChampionData(champions: ChampionRecord[]) {
         .from('Champion')
         .upsert(champions, { onConflict: 'id' });
     if (error) {
-        console.error('Error inserting champion data:', error);
-        await logger.error('Error inserting champion data.');
+        throw new Error(`Failed to upsert champion data: ${error.message}`);
     } else {
         console.log(`Inserted/Updated champion data successfully.`);
     }
@@ -296,8 +325,7 @@ async function upsertUniverseData(universes: UniverseRecord[]) {
         .from('Universe')
         .upsert(universes, { onConflict: 'id' });
     if (error) {
-        console.error('Error inserting universe data:', error);
-        await logger.error('Error inserting universe data.');
+        throw new Error(`Failed to upsert universe data: ${error.message}`);
     } else {
         console.log(`Inserted/Updated universe data successfully.`);
     }
@@ -308,8 +336,7 @@ async function upsertSkinlineData(skinlines: SkinlineRecord[]) {
         .from('Skinline')
         .upsert(skinlines, { onConflict: 'id' });
     if (error) {
-        console.error('Error inserting skinline data:', error);
-        await logger.error('Error inserting skinline data.');
+        throw new Error(`Failed to upsert skinline data: ${error.message}`);
     } else {
         console.log(`Inserted/Updated skinline data successfully.`);
     }
@@ -317,6 +344,7 @@ async function upsertSkinlineData(skinlines: SkinlineRecord[]) {
 
 async function main() {
     const ChampionDict = ChampionDictionary();
+    const excludedChampionAliases = ExcludedChampionAliases();
     const UniverseDict = UniverseDictionary();
 
     const processedChampions = processChampions();
@@ -328,20 +356,23 @@ async function main() {
     const processedSkinlines = processSkinlines(UniverseDict);
     await upsertSkinlineData(processedSkinlines);
 
-    const processedSkins = processSkins(ChampionDict);
-    await upsertCatalogItems(processedSkins);
+    const processedSkins = processSkins(
+        ChampionDict,
+        excludedChampionAliases,
+    );
+    await upsertCatalogItems(processedSkins, 'skins and chromas');
 
     const processedFinishers = processFinishers();
-    await upsertCatalogItems(processedFinishers);
+    await upsertCatalogItems(processedFinishers, 'finishers');
 
     const processedIcons = processIcons();
-    await upsertCatalogItems(processedIcons);
+    await upsertCatalogItems(processedIcons, 'icons');
 
     const processedEmotes = processEmotes();
-    await upsertCatalogItems(processedEmotes);
+    await upsertCatalogItems(processedEmotes, 'emotes');
 
     const processedWards = processWards();
-    await upsertCatalogItems(processedWards);
+    await upsertCatalogItems(processedWards, 'wards');
 }
 main()
     .then(async () => {

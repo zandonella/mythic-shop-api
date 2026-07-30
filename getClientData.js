@@ -1,16 +1,31 @@
 import { HasagiClient } from '@hasagi/core';
 import fs from 'fs';
+import path from 'path';
 
 const client = new HasagiClient();
+const leagueInstallDirectory =
+    process.env.LEAGUE_INSTALL_DIRECTORY ??
+    'C:\\Riot Games\\League of Legends';
+const leagueLockfile = path.join(leagueInstallDirectory, 'lockfile');
+
+client.on('connecting', () => {
+    console.log(`Waiting for League client lockfile at ${leagueLockfile}...`);
+});
+
+client.on('connection-attempt-failed', () => {
+    console.log('League client is not ready yet. Retrying in 5 seconds.');
+});
 
 try {
     await client.connect({
+        authenticationStrategy: 'lockfile',
+        lockfile: leagueLockfile,
         useWebSocket: false,
         maxConnectionAttempts: 12,
-        delayBetweenAttempts: 5000,
+        connectionAttemptDelay: 5000,
     });
 } catch (error) {
-    console.error('Failed to connect to client. Exiting script.');
+    console.error('Failed to connect to the League client. Exiting script.');
     process.exit(20);
 }
 

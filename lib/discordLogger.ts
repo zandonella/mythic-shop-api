@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ quiet: true });
 
 type DiscordLogLevel = 'ERROR' | 'WARN' | 'OK';
 type IssueLevel = Exclude<DiscordLogLevel, 'OK'>;

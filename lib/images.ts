@@ -58,21 +58,3 @@ export function createSanctumBannerImageUrl(
 
     return createCDNImageUrl(splashPath);
 }
-
-// const testEmote =
-//     '/lol-game-data/assets/ASSETS/Loadouts/SummonerEmotes/TFT/StandardRewards/4422_The_Boss_Inventory.png';
-// const testTile =
-//     '/lol-game-data/assets/ASSETS/Characters/Annie/Skins/Skin01/Images/annie_splash_tile_1.jpg';
-// const testIcon = '/lol-game-data/assets/v1/profile-icons/5164.jpg';
-
-// console.log(getCommunityDragonUrl(testEmote));
-// console.log(getCommunityDragonUrl(testTile));
-// console.log(getCommunityDragonUrl(testIcon));
-
-// console.log(createCDNImageUrl(testTile));
-
-const title =
-    '/lol-game-data/assets/ASSETS/PlayerTitles/1409_AprilFools_AchievementTitle.svg';
-const url = getCommunityDragonUrl(title);
-const cdnUrl = createCDNImageUrl(title);
-console.log(cdnUrl);
