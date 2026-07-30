@@ -78,41 +78,9 @@ if [[ "${RIOT_LAUNCH_ONLY:-false}" == "true" ]]; then
     exit 0
 fi
 
-max_attempts=3
-attempt=1
-
-while (( attempt <= max_attempts )); do
-    echo "Attempt $attempt to get client data..."
-    set +e
-    node getClientData.js
-    exit_code=$?
-    set -e
-    case $exit_code in
-        0)
-            echo "Client data retrieved successfully."
-            break
-            ;;
-        20)
-            echo "Client did not load, likely updating. Retrying..."
-            ;;
-        21)
-            echo "Stores did not load within the expected time. Retrying..."
-            ;;
-        *)
-            echo "Unexpected error (code $exit_code). Exiting."
-            exit $exit_code
-            ;;
-    esac
-    if ! launch_league; then
-        exit 1
-    fi
-    ((attempt++))
-done
-
-if (( attempt > max_attempts )); then
-    echo "Failed to retrieve client data after $max_attempts attempts. Exiting."
-    exit 1
-fi
+echo "Waiting for League client data."
+node getClientData.js
+echo "Client data retrieved successfully."
 
 node processClientData.ts
 

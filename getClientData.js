@@ -1,31 +1,75 @@
 import { HasagiClient } from '@hasagi/core';
 import fs from 'fs';
 import path from 'path';
+import { parseLeagueLockfile } from './lib/leagueLockfile.js';
 
 const client = new HasagiClient();
 const leagueInstallDirectory =
     process.env.LEAGUE_INSTALL_DIRECTORY ??
     'C:\\Riot Games\\League of Legends';
 const leagueLockfile = path.join(leagueInstallDirectory, 'lockfile');
+const connectionAttempts = Number.parseInt(
+    process.env.LEAGUE_CONNECTION_ATTEMPTS ?? '12',
+    10,
+);
+const connectionAttemptDelay = Number.parseInt(
+    process.env.LEAGUE_CONNECTION_DELAY_MS ?? '5000',
+    10,
+);
 
-client.on('connecting', () => {
-    console.log(`Waiting for League client lockfile at ${leagueLockfile}...`);
-});
+if (!Number.isInteger(connectionAttempts) || connectionAttempts < 1) {
+    console.error('LEAGUE_CONNECTION_ATTEMPTS must be a positive integer.');
+    process.exit(2);
+}
 
-client.on('connection-attempt-failed', () => {
-    console.log('League client is not ready yet. Retrying in 5 seconds.');
-});
+if (!Number.isInteger(connectionAttemptDelay) || connectionAttemptDelay < 1) {
+    console.error('LEAGUE_CONNECTION_DELAY_MS must be a positive integer.');
+    process.exit(2);
+}
 
-try {
-    await client.connect({
-        authenticationStrategy: 'lockfile',
-        lockfile: leagueLockfile,
-        useWebSocket: false,
-        maxConnectionAttempts: 12,
-        connectionAttemptDelay: 5000,
-    });
-} catch (error) {
-    console.error('Failed to connect to the League client. Exiting script.');
+let currentConnectionAttempt = 0;
+
+let connectionError;
+
+while (currentConnectionAttempt < connectionAttempts) {
+    currentConnectionAttempt++;
+    console.log(
+        `Connecting to the League client with ${leagueLockfile}. Attempt ${currentConnectionAttempt} of ${connectionAttempts}.`,
+    );
+
+    try {
+        const lockfileContent = await fs.promises.readFile(
+            leagueLockfile,
+            'utf8',
+        );
+        const credentials = parseLeagueLockfile(lockfileContent);
+
+        await client.connect({
+            authenticationStrategy: 'manual',
+            credentials,
+            useWebSocket: false,
+        });
+        connectionError = undefined;
+        break;
+    } catch (error) {
+        connectionError = error;
+
+        if (currentConnectionAttempt < connectionAttempts) {
+            console.log(
+                `League client is not ready yet. Retrying in ${connectionAttemptDelay} milliseconds.`,
+            );
+            await new Promise((resolve) =>
+                setTimeout(resolve, connectionAttemptDelay),
+            );
+        }
+    }
+}
+
+if (connectionError) {
+    console.error(
+        `Failed to connect to the League client after ${connectionAttempts} attempts. Exiting script.`,
+        connectionError,
+    );
     process.exit(20);
 }
 
